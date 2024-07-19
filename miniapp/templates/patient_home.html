@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        header {
+            background: #4CAF50;
+            color: #ffffff;
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 4px solid #388E3C;
+        }
+        header h1 {
+            margin: 0;
+        }
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background: #333;
+            padding: 10px 0;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 20px;
+            display: block;
+        }
+        .navbar a:hover {
+            background: #575757;
+        }
+        .content {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .section {
+            width: 48%;
+        }
+        .section h2 {
+            background: #4CAF50;
+            color: #ffffff;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .doctor, .appointment {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            background: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .doctor p, .appointment p {
+            margin: 5px 0;
+        }
+        .messages {
+            margin-top: 20px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .message-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        .message.sent {
+            background: #dcf8c6;
+            margin-left: auto;
+        }
+        .message.received {
+            background: #ffffff;
+            margin-right: auto;
+        }
+        .message-form {
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+        .message-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .message-form textarea, .message-form select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .message-form button {
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .message-form button:hover {
+            background: #388E3C;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Healthcare Portal</h1>
+        </div>
+    </header>
+    <nav class="navbar">
+        <a href="{% url 'patient_logout' %}">Logout</a>
+    </nav>
+    <div class="container">
+        <div class="content">
+            <div class="section">
+                <h2>Doctors</h2>
+                {% for doctor in doctors %}
+                    <div class="doctor">
+                        <p><strong>Name:</strong> {{ doctor.name }}</p>
+                        <p><strong>Specialization:</strong> {{ doctor.specialization }}</p>
+                        <form method="post" action="{% url 'make_appointment' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                            <label for="date">Date:</label>
+                            <input type="datetime-local" id="date" name="date" required>
+                            <label for="description">Description:</label>
+                            <textarea id="description" name="description" rows="4" required></textarea>
+                            <button type="submit">Make Appointment</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="section">
+                <h2>Appointments</h2>
+                {% for appointment in appointments %}
+                    <div class="appointment">
+                        <p><strong>Doctor:</strong> {{ appointment.doctor_id.name }}</p>
+                        <p><strong>Date:</strong> {{ appointment.date }}</p>
+                        <p><strong>Description:</strong> {{ appointment.description }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="messages">
+            <h2>Messages</h2>
+            <div class="message-list" id="message-list">
+                {% for message in messages_received %}
+                    <div class="message received">
+                        <p><strong>From:</strong> {{ message.sender_id }}</p>
+                        <p><strong>Message:</strong> {{ message.message }}</p>
+                        <p><strong>Time:</strong> {{ message.timestamp }}</p>
+                    </div>
+                {% endfor %}
+                {% for message in messages_sent %}
+                    <div class="message sent">
+                        <p><strong>To:</strong> {{ message.recipient_id }}</p>
+                        <p><strong>Message:</strong> {{ message.message }}</p>
+                        <p><strong>Time:</strong> {{ message.timestamp }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="message-form">
+                <form id="message-form">
+                    {% csrf_token %}
+                    <label for="recipient_id">Recipient:</label>
+                    <select id="recipient_id" name="recipient_id" required>
+                        {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}">{{ doctor.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="message">Message:</label>
+                    <textarea id="message" name="message" rows="4" required></textarea>
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('message-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            fetch("{% url 'send_message' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.text())
+            .then(data => {
+                loadMessages();
+                this.reset();
+            });
+        });
+
+        function loadMessages() {
+            fetch("{% url 'get_messages' %}")
+                .then(response => response.json())
+                .then(data => {
+                    const messageList = document.getElementById('message-list');
+                    messageList.innerHTML = '';
+                    data.messages_received.forEach(message => {
+                        messageList.innerHTML += `
+                            <div class="message received">
+                                <p><strong>From:</strong> ${message.sender_id}</p>
+                                <p><strong>Message:</strong> ${message.message}</p>
+                                <p><strong>Time:</strong> ${message.timestamp}</p>
+                            </div>
+                        `;
+                    });
+                    data.messages_sent.forEach(message => {
+                        messageList.innerHTML += `
+                            <div class="message sent">
+                                <p><strong>To:</strong> ${message.recipient_id}</p>
+                                <p><strong>Message:</strong> ${message.message}</p>
+                                <p><strong>Time:</strong> ${message.timestamp}</p>
+                            </div>
+                        `;
+                    });
+                });
+        }
+
+        loadMessages();
+    </script>
+</body>
+</html>

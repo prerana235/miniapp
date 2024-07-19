@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Portal</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #72EDF2 10%, #5151E5 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+        }
+        .container h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        .container p {
+            font-size: 1.2em;
+            margin-bottom: 40px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .button {
+            padding: 15px 30px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button-doc {
+            background-color: #007BFF;
+        }
+        .button-doc:hover {
+            background-color: #0056b3;
+        }
+        .button-patient {
+            background-color: #28a745;
+        }
+        .button-patient:hover {
+            background-color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Healthcare Portal</h1>
+        <p>Please select your login type:</p>
+        <div class="button-container">
+            <a href="{% url 'doc_login' %}">
+                <button class="button button-doc">Doctor Login</button>
+            </a>
+            <a href="{% url 'patient_login' %}">
+                <button class="button button-patient">Patient Login</button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
